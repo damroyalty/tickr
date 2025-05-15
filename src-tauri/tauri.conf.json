@@ -1,0 +1,10 @@
+{
+  "$schema": "https://schema.tauri.app/schema/tauri-2-5.json",
+  "productName": "Tickr",
+  "version": "0.1.0",
+  "identifier": "com.tickr.app",
+  "build": {
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  }
+}
