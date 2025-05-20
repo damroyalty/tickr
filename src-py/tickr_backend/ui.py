@@ -4,9 +4,8 @@ from PySide6.QtWidgets import (
     QTabWidget, QGroupBox, QGridLayout, QSizePolicy, QMessageBox,
     QComboBox
 )
-from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject, QPropertyAnimation, QEasingCurve
+from PySide6.QtCore import Qt, QTimer, QThread, Signal, QObject, QPropertyAnimation, QEasingCurve, QUrl
 from PySide6.QtGui import QFont, QColor, QPalette, QLinearGradient, QBrush
-from .chart import ChartWidget
 from .data import get_stock_data, get_crypto_data
 import os
 from PySide6.QtGui import QIcon
@@ -250,11 +249,6 @@ class TickrUI(QMainWindow):
                 selection-background-color: #3700B3;
                 selection-color: white;
             }
-            ChartWidget {
-                background-color: #1E1E1E;
-                border-radius: 8px;
-                border: 1px solid #444;
-            }
             QFormLayout {
                 color: #E0E0E0;
             }
@@ -305,18 +299,41 @@ class TickrUI(QMainWindow):
         info_layout.addWidget(volume_section, 1, 0, 1, 2)
         info_group.setLayout(info_layout)
 
-        chart = ChartWidget([], "Price History")
+        # Replace ChartWidget with TradingView QWebEngineView
+        chart = QWebEngineView()
+        chart.setMinimumHeight(350)
+        chart.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        # Set default chart
+        if is_crypto:
+            chart.setUrl(QUrl("https://www.tradingview.com/chart/?symbol=BINANCE:BTCUSDT"))
+        else:
+            chart.setUrl(QUrl("https://www.tradingview.com/chart/?symbol=NASDAQ:AAPL"))
 
         def initiate_search():
+            symbol = search_input.text().strip().upper()
             self.current_time_range = time_range_combo.currentText()
+            # Update TradingView chart
+            if is_crypto:
+                chart.setUrl(QUrl(f"https://www.tradingview.com/chart/?symbol=BINANCE:{symbol}USDT"))
+            else:
+                # Guess exchange for TradingView (improve as needed)
+                nasdaq = {"AAPL", "MSFT", "GOOGL", "TSLA", "AMZN", "NVDA", "META", "QQQ"}
+                if symbol == "SPY":
+                    tvsym = f"AMEX:{symbol}"
+                elif symbol in nasdaq:
+                    tvsym = f"NASDAQ:{symbol}"
+                else:
+                    tvsym = f"NYSE:{symbol}"
+                chart.setUrl(QUrl(f"https://www.tradingview.com/chart/?symbol={tvsym}"))
+            # ...existing code to fetch and update market data...
             self.initiate_data_load(
-                search_input.text().strip(), 
+                symbol,
                 {
                     'price_labels': price_section.property('labels'),
                     'stats_labels': stats_section.property('labels'),
                     'volume_labels': volume_section.property('labels')
                 },
-                chart, 
+                chart,
                 is_crypto
             )
 
